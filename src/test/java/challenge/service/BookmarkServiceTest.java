@@ -36,6 +36,14 @@ public class BookmarkServiceTest {
 
     @MockBean
     private ShotService shotServiceMock;
+    
+    @Before
+    public void cleanDB(){
+    	// TODO: Encontrar uma forma de limpar o banco via spring-boot.
+    	for(Bookmark b: bookmarkService.recoverBookmarks()){
+    		bookmarkService.unbookmark(b.getShotId());
+    	}
+    }
 
     @Test
     public void testGetBookmark(){
