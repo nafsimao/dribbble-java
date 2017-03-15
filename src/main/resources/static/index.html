@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Dribble Bookmark</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="bootstrap.min.css">
+  <link rel="stylesheet" href="styles.css">
+  <script src="angular.min.js"></script>
+  <script src="ui-bootstrap.js"></script>
+  <script src="script.js"></script>
+</head>
+<body ng-app="dribbbleBookmark" ng-controller="dribbleController">
+
+<nav class="navbar navbar-inverse">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="#">Dribbble Bookmarks</a>
+    </div>
+    <div class="collapse navbar-collapse" id="myNavbar">
+      <ul class="nav navbar-nav">
+        <li ng-class="{'active': shotViewSelected}" ng-click="shotViewSelected = true"><a href="#">Consulta</a></li>
+        <li ng-class="{'active': !shotViewSelected}" ng-click="shotViewSelected = false"><a href="#">Favoritos</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div ng-show="shotViewSelected" class="shotView">
+
+  <div class="container-fluid text-center">
+    <div class="row content">
+      <div class="row row-shots col-sm-12">
+        <div class="shot col-xs-6 col-md-3" ng-repeat="shot in shots" ng-click="openShotDetails(shot)">
+          <a href="#" class="thumbnail">
+            <img height="{{shot.height}}px" width="{{shot.width}}px" src="{{shot.images.teaser}}">
+            {{shot.views_count}} <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span> {{shot.likes_count}} <span class="glyphicon glyphicon-thumbs-up" aria-hidden="true"></span> {{shot.buckets_count}}<span class="glyphicon glyphicon-piggy-bank" aria-hidden="true"></span>
+          </a>
+        </div>
+        <input ng-hide="retrieving" class="btn btn-default" type="button" value="Carregar mais ..." ng-click="loadMoreShots()">
+      </div>
+    </div>
+  </div>
+</div>
+
+<div ng-show="!shotViewSelected" class="bookmarkView">
+  <div class="container-fluid text-center">
+    <div class="row content">
+      <div class="col-sm-2 sidenav">
+        <p><a ng-click="switchRetrieveOnly(false)" ng-class="{'activeSearch': !retrieveOnlyRecentBookmarks, 'searchOption': true}" href="#">Por data de inclusão</a></p>
+        <p><a ng-click="switchRetrieveOnly(true)" ng-class="{'activeSearch': retrieveOnlyRecentBookmarks, 'searchOption': true}" href="#">Adicionados recentemente</a></p>
+      </div>
+      <h4 ng-show="bookmarks.length == 0">Não existem favoritos cadastrados.</h4>
+      <div class="row row-bookmarks col-sm-10">
+        <div class="shot col-xs-6 col-md-3" ng-repeat="bookmark in bookmarks" ng-click="openBookmarkDetails(bookmark)">
+          <a href="#" class="thumbnail">
+            <img height="{{bookmark.shot.height}}px" width="{{bookmark.shot.width}}px" src="{{bookmark.shot.images.teaser}}">
+            {{bookmark.shot.views_count}} <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span> {{bookmark.shot.likes_count}} <span class="glyphicon glyphicon-thumbs-up" aria-hidden="true"></span> {{bookmark.shot.buckets_count}}<span class="glyphicon glyphicon-piggy-bank" aria-hidden="true"></span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="text/ng-template" id="shotDetailsModal.html">
+  <div class="modal-header">
+    <h3 class="modal-title" id="modal-title-shot"><span style="font-weight: bold">"{{$ctrl.shot.title}}"</span><br>by {{$ctrl.shot.user.name}}</h3>
+  </div>
+  <div class="modal-body" id="modal-body-shot">
+    <table>
+      <tbody>
+      <tr>
+        <td class="shot col-xs-9 col-md-9">
+          <a href="#" class="thumbnail text-center">
+            <img height="{{$ctrl.shot.height}}px" width="{{$ctrl.shot.width}}px" src="{{$ctrl.shot.images.teaser}}">
+            {{$ctrl.shot.views_count}} <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span> {{$ctrl.shot.likes_count}} <span class="glyphicon glyphicon-thumbs-up" aria-hidden="true"></span> {{$ctrl.shot.buckets_count}}<span class="glyphicon glyphicon-piggy-bank" aria-hidden="true"></span>
+          </a>
+        </td>
+        <td class="shot col-xs-3 col-md-3">
+          <form>
+            <div class="form-group">
+              <button type="button" class="btn btn-default btn-lg" ng-click="$ctrl.bookmark()" aria-describedby="helpBlock">
+                <span class="glyphicon glyphicon-star" aria-hidden="true"></span> Tornar favorito
+              </button>
+              <span id="helpBlock" class="help-block"><span class="text-warning" ng-show="$ctrl.showErrorMessage">Imagem já está salva na sua galeria de favoritos</span><span class="text-success" ng-show="$ctrl.showSuccessMessage">Imagem salva com sucesso na sua galeria de imagens.</span></span>
+            </div>
+            <div class="form-group">
+              <button type="button" class="btn btn-default btn-lg" ng-click="$ctrl.maximize()">
+                <span class="glyphicon glyphicon-resize-full" aria-hidden="true"></span> Maximizar
+              </button>
+            </div>
+            <div class="form-group">
+              <p>Data de publicação: {{$ctrl.creationDate | date: 'HH:mm dd/MM/yyyy'}}</p>
+            </div>
+          </form>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+</script>
+
+<script type="text/ng-template" id="bookmarkDetailsModal.html">
+  <div class="modal-header">
+    <h3 class="modal-title" id="modal-title-bookmark"><span style="font-weight: bold">"{{$ctrl.bookmark.shot.title}}"</span><br>by {{$ctrl.bookmark.shot.user.name}}</h3>
+  </div>
+  <div class="modal-body" id="modal-body-bookmark">
+    <table>
+      <tbody>
+        <tr>
+          <td class="shot col-xs-9 col-md-9">
+            <a href="#" class="thumbnail text-center">
+              <img height="{{$ctrl.bookmark.shot.height}}px" width="{{$ctrl.bookmark.shot.width}}px" src="{{$ctrl.bookmark.shot.images.teaser}}">
+              {{$ctrl.bookmark.shot.views_count}} <span class="glyphicon glyphicon-eye-open" aria-hidden="true"></span> {{$ctrl.bookmark.shot.likes_count}} <span class="glyphicon glyphicon-thumbs-up" aria-hidden="true"></span> {{$ctrl.bookmark.shot.buckets_count}}<span class="glyphicon glyphicon-piggy-bank" aria-hidden="true"></span>
+            </a>
+          </td>
+          <td class="shot col-xs-3 col-md-3">
+            <form>
+              <div class="form-group">
+                <button type="button" class="btn btn-default btn-lg" ng-click="$ctrl.unbookmark()">
+                  <span class="glyphicon glyphicon-star-empty" aria-hidden="true"></span> Remover favorito
+                </button>
+                <span id="helpBlock" class="help-block"><span class="text-success" ng-show="$ctrl.showSuccessMessage">Imagem removida dos favoritos com sucesso.</span></span>
+              </div>
+              <div class="form-group">
+                <button type="button" class="btn btn-default btn-lg" ng-click="$ctrl.maximize()">
+                  <span class="glyphicon glyphicon-resize-full" aria-hidden="true"></span> Maximizar
+                </button>
+              </div>
+              <div class="form-group">
+                <p>Data de publicação: {{$ctrl.creationDate | date: 'HH:mm dd/MM/yyyy'}}</p>
+              </div>
+              <div class="form-group">
+                <p>Data que foi adicionada aos favoritos: {{$ctrl.bookmarkDate | date: 'HH:mm dd/MM/yyyy'}}</p>
+              </div>
+            </form>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</script>
+
+
+</body>
+</html>
